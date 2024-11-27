@@ -2,6 +2,7 @@
   "extends": "./tsconfig.node.json",
   "compilerOptions": {
     "composite": true,
+    "noEmit": false,
     "target": "ES2022",
     "lib": [
       "ES2023"
@@ -13,7 +14,6 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
