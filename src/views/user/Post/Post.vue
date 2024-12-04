@@ -15,6 +15,8 @@ import {
 } from "@ant-design/icons-vue";
 import { onMounted, ref, reactive, computed } from "vue";
 import { message } from "ant-design-vue";
+import zhCN from "ant-design-vue/es/locale/zh_CN";
+
 import {
   deletePostUsingPost,
   favourPostUsingPost,

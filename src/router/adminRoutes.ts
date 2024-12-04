@@ -39,6 +39,15 @@ const adminRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "AIControl",
+        name: "AIControl",
+        component: () => import("@/views/admin/ai/ai-crud-table.vue"),
+        meta: {
+          breadcrumb: "AI管理",
+          icon: "RobotOutlined",
+        },
+      },
+      {
         path: "postControl",
         name: "postControl",
         component: () => import("@/views/admin/post/post-crud-table.vue"),

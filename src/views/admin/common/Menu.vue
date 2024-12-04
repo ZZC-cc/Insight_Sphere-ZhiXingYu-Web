@@ -3,7 +3,7 @@
     <!-- 侧边栏头部 -->
     <div class="sidebar-header" mt1 mb4>
       <img :src="Website.logo_url" alt="Logo" class="sidebar-logo" />
-      <span class="sidebar-title" v-if="!collapsed">{{
+      <span style="width: 160px" class="sidebar-title" v-if="!collapsed">{{
         Website.site_name
       }}</span>
     </div>
@@ -40,6 +40,7 @@ import {
   CommentOutlined,
   CodeOutlined,
   CreditCardOutlined,
+  RobotOutlined,
 } from "@ant-design/icons-vue";
 import { getWebsiteDetailsUsingGet } from "@/servers/api/webSiteController.ts";
 import WebsiteVO = API.WebsiteVO;
@@ -69,6 +70,7 @@ const iconMap: Record<string, any> = {
   CommentOutlined,
   CodeOutlined,
   CreditCardOutlined,
+  RobotOutlined,
 };
 
 // 递归函数：生成菜单项
@@ -146,7 +148,7 @@ const handleMenuClick: MenuProps["onClick"] = (e) => {
 
 <style scoped>
 .sidebar {
-  width: 230px;
+  width: 200px;
   background-color: #ffffff;
   display: flex;
   flex-direction: column;

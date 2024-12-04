@@ -105,7 +105,7 @@ const current = ref("");
 // 自定义菜单项
 const items = ref([
   { key: "home", label: "主页", icon: "🏠", url: "/" },
-  { key: "app", label: "AI对话", icon: "🤖", url: "/AIChat" },
+  { key: "app", label: "聚合AI", icon: "🤖", url: "/AIChat" },
   { key: "post", label: "博客", icon: "📄", url: "/post" },
   { key: "product", label: "教程", icon: "🖥️", url: "/product" },
   { key: "Information", label: "资讯", icon: "🐳", url: "/Information" },

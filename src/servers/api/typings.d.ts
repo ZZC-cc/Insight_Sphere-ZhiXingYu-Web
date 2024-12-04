@@ -1,13 +1,100 @@
 declare namespace API {
-  type BaseResponseboolean = {
+  type AIChatMessage = {
+    /** 消息内容 */
+    content?: string;
+    /** 创建时间 */
+    created_time?: string;
+    /** 消息ID */
+    id?: number;
+    /** 逻辑删除标记 */
+    isDelete?: number;
+    /** 附加元信息（JSON格式） */
+    metadata?: string;
+    /** 角色（user/assistant/system） */
+    role?: string;
+    /** 会话ID */
+    session_id?: number;
+    /** 消息tokens（用于统计和上下文控制） */
+    tokens?: number;
+  };
+
+  type AIChatSessionVO = {
+    /** 创建时间 */
+    created_time?: string;
+    /** 会话ID */
+    id?: number;
+    /** 逻辑删除标记 */
+    isDelete?: number;
+    /** AI模型 */
+    model?: string;
+    /** 会话名称 */
+    session_name?: string;
+    /** 会话状态（active/inactive） */
+    status?: string;
+    /** 会话摘要 */
+    summary?: string;
+    /** 更新时间 */
+    updated_time?: string;
+    /** 用户VO */
+    userVO?: UserVO;
+    /** 用户ID */
+    user_id?: number;
+  };
+
+  type AIModel = {
+    /** API密钥 */
+    api_key?: string;
+    context_window?: string;
+    /** 创建时间 */
+    created_time?: string;
+    /** ID */
+    id?: number;
+    /** 逻辑删除标记 */
+    is_deleted?: number;
+    max_output_tokens?: string;
+    model_desc?: string;
+    /** 模型名称 */
+    model_name?: string;
+    /** 模型类型 */
+    model_type?: string;
+    /** AI 平台 */
+    platform_id?: number;
+    /** 费率 */
+    rate?: number;
+    /** 更新时间 */
+    updated_time?: string;
+  };
+
+  type AIPlatform = {
+    /** API基础URL */
+    api_url?: string;
+    /** 创建时间 */
+    created_time?: string;
+    /** ID */
+    id?: number;
+    /** 逻辑删除标记 */
+    is_deleted?: number;
+    /** 平台描述 */
+    platform_description?: string;
+    /** 平台封面 */
+    platform_image_url?: string;
+    /** 平台名称 */
+    platform_name?: string;
+    /** 平台链接 */
+    platform_url?: string;
+    /** 更新时间 */
+    updated_time?: string;
+  };
+
+  type BaseResponseAIPlatform = {
     code?: number;
-    data?: boolean;
+    data?: AIPlatform;
     message?: string;
   };
 
-  type BaseResponseChatSession = {
+  type BaseResponseboolean = {
     code?: number;
-    data?: ChatSession;
+    data?: boolean;
     message?: string;
   };
 
@@ -23,15 +110,27 @@ declare namespace API {
     message?: string;
   };
 
-  type BaseResponseListChatMessage = {
+  type BaseResponseListAIChatMessage = {
     code?: number;
-    data?: ChatMessage[];
+    data?: AIChatMessage[];
     message?: string;
   };
 
-  type BaseResponseListChatSession = {
+  type BaseResponseListAIChatSessionVO = {
     code?: number;
-    data?: ChatSession[];
+    data?: AIChatSessionVO[];
+    message?: string;
+  };
+
+  type BaseResponseListAIModel = {
+    code?: number;
+    data?: AIModel[];
+    message?: string;
+  };
+
+  type BaseResponseListAIPlatform = {
+    code?: number;
+    data?: AIPlatform[];
     message?: string;
   };
 
@@ -160,36 +259,9 @@ declare namespace API {
     id: number;
   };
 
-  type ChatMessage = {
-    /** 内容 */
-    content?: string;
-    /** 创建时间 */
-    created_time?: string;
-    /** 信息id */
-    id?: number;
-    isDelete?: number;
-    /** 角色 */
-    role?: string;
-    /** 聊天id */
-    session_id?: number;
-  };
-
-  type ChatSession = {
-    /** 创建时间 */
-    created_time?: string;
-    /** 聊天id */
-    id?: number;
-    isDelete?: number;
-    /** 模型 */
-    model?: string;
-    /** 会话图像 */
-    session_image?: string;
-    /** 会话名称 */
-    session_name?: string;
-    /** 概要 */
-    summary?: string;
-    /** 用户id */
-    user_id?: number;
+  type clearMessagesUsingDELETEParams = {
+    /** sessionId */
+    sessionId: number;
   };
 
   type CommentAddRequest = {
@@ -219,11 +291,14 @@ declare namespace API {
     user_id?: number;
   };
 
-  type CreateChatRequest = {
-    /** 模型 */
-    model?: string;
-    /** 用户id */
-    userId?: number;
+  type CreateModelRequest = {
+    context_window?: string;
+    max_output_tokens?: string;
+    model_desc?: string;
+    model_name?: string;
+    model_type?: string;
+    platform_id?: number;
+    rate?: number;
   };
 
   type CreateNoticeDto = {
@@ -234,6 +309,11 @@ declare namespace API {
     start_time?: string;
     status?: number;
     title?: string;
+  };
+
+  type CreateSessionRequest = {
+    model?: string;
+    userId?: number;
   };
 
   type CreateUserDto = {
@@ -266,13 +346,28 @@ declare namespace API {
     days: number;
   };
 
+  type deleteModelUsingDELETEParams = {
+    /** id */
+    id: number;
+  };
+
   type DeleteNoticeDto = {
     /** 通知id */
     notice_id?: number;
   };
 
+  type deletePlatformUsingDELETEParams = {
+    /** id */
+    id: number;
+  };
+
   type DeleteRequest = {
     id?: number;
+  };
+
+  type deleteSessionUsingDELETEParams = {
+    /** id */
+    id: string;
   };
 
   type deleteUserUsingDELETEParams = {
@@ -296,16 +391,6 @@ declare namespace API {
     postId: number;
   };
 
-  type getChatMessagesUsingGETParams = {
-    /** sessionId */
-    sessionId: number;
-  };
-
-  type getChatSessionsUsingGETParams = {
-    /** userId */
-    userId: number;
-  };
-
   type getCommentBySearchTextUsingGETParams = {
     /** searchText */
     searchText: string;
@@ -316,9 +401,24 @@ declare namespace API {
     postId: number;
   };
 
+  type GetMessageRequest = {
+    limit?: number;
+    sessionId?: number;
+  };
+
   type getOrderVOByIdUsingGETParams = {
     /** id */
     id: number;
+  };
+
+  type getPlatformByIdUsingGETParams = {
+    /** id */
+    id: number;
+  };
+
+  type getPlatformIdByModelNameUsingGETParams = {
+    /** modelName */
+    modelName: string;
   };
 
   type getPostVOByIdUsingGETParams = {
@@ -371,6 +471,11 @@ declare namespace API {
   type incrementViewUsingPOSTParams = {
     /** postId */
     postId: number;
+  };
+
+  type listModelsByPlatformIdUsingGETParams = {
+    /** platformId */
+    platformId: number;
   };
 
   type listPagedPostsUsingGETParams = {
@@ -531,6 +636,7 @@ declare namespace API {
   };
 
   type PostGenerateRequest = {
+    model?: string;
     prompt?: string;
   };
 
@@ -699,6 +805,14 @@ declare namespace API {
     searchText?: string;
   };
 
+  type SendMessageRequest = {
+    content?: string;
+    model?: string;
+    platformId?: number;
+    role?: string;
+    sessionId?: number;
+  };
+
   type TaskAddRequest = {
     endTime?: string;
     linkId?: number;
@@ -818,13 +932,6 @@ declare namespace API {
     username?: string;
   };
 
-  type UpdateChatModelRequest = {
-    /** id */
-    id?: number;
-    /** 模型 */
-    model?: string;
-  };
-
   type UpdateNoticeDto = {
     content?: string;
     end_time?: string;
@@ -885,15 +992,6 @@ declare namespace API {
     vipEndTime?: string;
     /** vip开始时间 */
     vipStartTime?: string;
-  };
-
-  type UserMessageRequest = {
-    /** 内容 */
-    content?: string;
-    /** 模型 */
-    model?: string;
-    /** 会话id */
-    sessionId?: number;
   };
 
   type UserVO = {

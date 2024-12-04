@@ -19,6 +19,11 @@ const userRoutes: Array<RouteRecordRaw> = [
         meta: { requiresAuth: false },
       },
       {
+        path: "/AIChat:sessionId",
+        component: () => import("@/views/user/AIChat/AIChat.vue"),
+        meta: { requiresAuth: false },
+      },
+      {
         path: "/post",
         component: () => import("@/views/user/Post/Post.vue"),
         meta: { requiresAuth: false },
