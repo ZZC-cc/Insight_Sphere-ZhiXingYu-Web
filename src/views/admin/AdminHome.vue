@@ -20,7 +20,7 @@
       <!-- 动态内容显示 -->
       <div class="content">
         <Breadcrumb />
-        <div style="background-color: #fff">
+        <div>
           <router-view />
         </div>
       </div>

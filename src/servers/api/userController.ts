@@ -2,6 +2,36 @@
 /* eslint-disable */
 import request from "../../utils/request.ts";
 
+/** 验证邮箱是否存在接口 GET /api/user/check/email */
+export async function checkEmailUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.checkEmailUsingGETParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseboolean>("/api/user/check/email", {
+    method: "GET",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 验证手机号是否存在接口 GET /api/user/check/phone */
+export async function checkPhoneUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.checkPhoneUsingGETParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseboolean>("/api/user/check/phone", {
+    method: "GET",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 /** 创建用户 POST /api/user/create */
 export async function userCreateUsingPost(
   body: API.CreateUserDto,
@@ -28,29 +58,6 @@ export async function deleteUserUsingDelete(
     params: {
       ...params,
     },
-    ...(options || {}),
-  });
-}
-
-/** 批量删除用户接口 DELETE /api/user/delete/users */
-export async function deleteUsersUsingDelete(
-  body: number[],
-  options?: { [key: string]: any }
-) {
-  return request<API.BaseResponsestring>("/api/user/delete/users", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** 获取极验初始化信息 GET /api/user/geetest/register */
-export async function initGeetestUsingGet(options?: { [key: string]: any }) {
-  return request<API.BaseResponseobject>("/api/user/geetest/register", {
-    method: "GET",
     ...(options || {}),
   });
 }
@@ -123,6 +130,21 @@ export async function loginUsingPost(
   });
 }
 
+/** 邮箱登录 POST /api/user/login/email */
+export async function loginByEmailUsingPost(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.loginByEmailUsingPOSTParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseUserVO>("/api/user/login/email", {
+    method: "POST",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 /** 注册用户 POST /api/user/register */
 export async function userRegisterUsingPost(
   body: API.RegisterUserDto,
@@ -179,6 +201,21 @@ export async function updatePasswordUsingPost(
       "Content-Type": "application/json",
     },
     data: body,
+    ...(options || {}),
+  });
+}
+
+/** 开通会员 POST /api/user/vip/open */
+export async function openVipUsingPost(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.openVipUsingPOSTParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponsestring>("/api/user/vip/open", {
+    method: "POST",
+    params: {
+      ...params,
+    },
     ...(options || {}),
   });
 }

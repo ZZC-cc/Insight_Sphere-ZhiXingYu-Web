@@ -205,11 +205,11 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
             搜索
           </a-button>
         </div>
-        <div>
+        <div s>
           <span style="margin-right: 10px; font-weight: 550; color: #585858"
             >标签搜索:</span
           >
-          <a-space :size="[5, 20]" wrap>
+          <a-space :size="[5, 20]" wrap mt2>
             <a-checkable-tag
               v-for="(tag, index) in tagsData"
               :key="tag"
@@ -228,7 +228,7 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
         </div>
       </div>
       <!--      <a-divider />-->
-      <div style="padding: 0px 20px">
+      <div style="padding: 0px 20px" mt4>
         <a-tabs v-model:activeKey="activeSort" @change="handleSortChange">
           <a-tab-pane key="createTime" tab="最新"></a-tab-pane>
           <a-tab-pane key="viewsNum" tab="最热"></a-tab-pane>
@@ -245,9 +245,23 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
           @click="goToProductDetail(item.id)"
         >
           <template #cover>
-            <img :src="item.images" width="100%" height="230px" />
+            <img :src="item.images" hight="100%" />
           </template>
-          <div style="font-size: 22px; font-weight: 550">{{ item.title }}</div>
+          <div style="font-size: 22px; font-weight: 550">
+            {{ item.title }}
+            <a-avatar
+              :src="item.userVO.avatar"
+              size="large"
+              style="
+                position: absolute;
+                right: 30px;
+                margin-top: -50px;
+                width: 50px;
+                height: 50px;
+              "
+              :style="{ top: item.images.height }"
+            />
+          </div>
 
           <div style="margin: 10px 0px">
             <span style="color: #585858">{{ item.description }}</span>
@@ -279,19 +293,6 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
             <a-tag color="red" style="float: right" v-if="item.type == '付费'"
               >{{ item.type }}
             </a-tag>
-          </div>
-          <div>
-            <a-avatar
-              :src="item.userVO.avatar"
-              size="large"
-              style="
-                position: absolute;
-                top: 205px;
-                right: 30px;
-                width: 50px;
-                height: 50px;
-              "
-            />
           </div>
         </a-card>
       </div>

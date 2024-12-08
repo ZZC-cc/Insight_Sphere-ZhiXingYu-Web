@@ -85,6 +85,16 @@ export async function getAllTagsUsingGet(options?: { [key: string]: any }) {
   });
 }
 
+/** 获取用户收藏的所有帖子 GET /api/post/get/favoured */
+export async function getFavouredPostsUsingGet(options?: {
+  [key: string]: any;
+}) {
+  return request<API.BaseResponseListPostVO>("/api/post/get/favoured", {
+    method: "GET",
+    ...(options || {}),
+  });
+}
+
 /** 获取总条数 GET /api/post/get/total */
 export async function getTotalUsingGet(options?: { [key: string]: any }) {
   return request<API.BaseResponseint>("/api/post/get/total", {

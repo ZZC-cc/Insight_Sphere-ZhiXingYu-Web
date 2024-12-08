@@ -58,14 +58,17 @@
         <template v-slot:overlay>
           <a-menu>
             <a-menu-item key="profile">
-              <a @click="handleProfile">个人中心</a>
+              <a @click="router.push('/center')">个人中心</a>
+            </a-menu-item>
+            <a-menu-item key="settings">
+              <a @click="router.push('/settings')">个人设置</a>
             </a-menu-item>
             <a-menu-item key="admin" v-if="User.role === 'admin'">
               <a @click="router.push('/admin')">管理后台</a>
             </a-menu-item>
-            <a-menu-item key="order">
-              <a @click="router.push('/order')">我的订单</a>
-            </a-menu-item>
+            <!--            <a-menu-item key="order">-->
+            <!--              <a @click="router.push('/order')">我的订单</a>-->
+            <!--            </a-menu-item>-->
             <a-menu-item key="logout">
               <a @click="handleLogout">退出登录</a>
             </a-menu-item>

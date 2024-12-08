@@ -2,7 +2,7 @@
   <!-- 主内容区域 -->
   <div class="content">
     <a-modal
-      v-model:visible="renameModalVisible"
+      v-model:open="renameModalVisible"
       title="重命名会话"
       ok-text="确定"
       cancel-text="取消"
@@ -88,7 +88,7 @@
       </div>
       <!-- 右侧聊天窗口 -->
       <div width="90%" class="chat-window">
-        <div class="chat-header">
+        <div class="chat-header" mt--5>
           <a-avatar
             :src="currentAIAvatar"
             alt="AI Avatar"
@@ -133,11 +133,36 @@
               <div
                 v-if="message.isMarkdown"
                 class="code-block"
-                v-html="message.htmlContent"
                 style="border: none; background-color: rgba(255, 238, 238, 0)"
-              ></div>
+              >
+                <div
+                  class="code-block"
+                  v-html="message.htmlContent"
+                  style="border: none; background-color: rgba(255, 238, 238, 0)"
+                  @mouseover="addCopyButtons"
+                ></div>
+              </div>
               <p v-else style="margin: 0">{{ message.text }}</p>
-              <span class="message-time">{{ message.time }}</span>
+              <span
+                class="message-time"
+                :style="
+                  message.sender === 'me'
+                    ? 'margin-top:20px;margin-bottom:-10px'
+                    : ''
+                "
+                >{{ message.time }}</span
+              >
+              <span
+                v-if="message.sender == 'other'"
+                style="
+                  position: relative;
+                  bottom: -20px;
+                  font-size: 12px;
+                  color: #999;
+                  float: right;
+                "
+                >tokens: {{ message.tokens }}</span
+              >
             </div>
           </div>
           <div v-if="messages.length === 0" class="no-messages">
@@ -172,9 +197,13 @@
             <a-button
               type="link"
               style="font-size: 20px; margin-top: -5px; color: #1878ff"
+              @click="openSetting"
               ml3
             >
-              <BulbOutlined />
+              <a-tooltip placement="top">
+                <template #title>聊天设置</template>
+                <BulbOutlined />
+              </a-tooltip>
             </a-button>
             <a-button
               type="link"
@@ -271,6 +300,54 @@
         </div>
       </div>
     </a-flex>
+    <a-modal
+      v-model:open="settingsDrawerVisible"
+      title="调整聊天参数"
+      placement="right"
+      width="500px"
+      @ok="applySettings"
+      @cancel="settingsDrawerVisible.value = false"
+      ok-text="应用"
+      cancel-text="取消"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="温度 (temperature)">
+          <a-slider
+            style="width: 90%"
+            v-model:value="chatSettings.temperature"
+            tooltip-placement="top"
+            :min="0"
+            :max="1"
+            :step="0.01"
+          />
+          <span style="color: #b5b5b5"
+            >说明：采样温度，控制输出的随机性，值越大，输出越随机。</span
+          >
+        </a-form-item>
+        <a-form-item label="核采样 (top_p)">
+          <a-slider
+            style="width: 90%"
+            v-model:value="chatSettings.top_p"
+            tooltip-placement="top"
+            :min="0"
+            :max="1"
+            :step="0.01"
+          />
+          <span style="color: #b5b5b5">说明：另用温度取样的另一种方法。</span>
+        </a-form-item>
+        <a-form-item label="最大生成长度 (maxTokens)">
+          <a-slider
+            style="width: 90%"
+            v-model:value="chatSettings.maxTokens"
+            tooltip-placement="top"
+            :min="1024"
+            :max="4096"
+            :step="128"
+          />
+          <span style="color: #b5b5b5">说明：模型输出的最大token数。</span>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -288,6 +365,7 @@ import {
   PictureOutlined,
   FileAddOutlined,
   InfoCircleOutlined,
+  CopyOutlined,
 } from "@ant-design/icons-vue";
 import { message, Modal } from "ant-design-vue";
 import hljs from "highlight.js";
@@ -306,6 +384,47 @@ marked.setOptions({
       : hljs.highlightAuto(code).value;
   },
 });
+
+const addCopyButtons = () => {
+  const codeBlocks = document.querySelectorAll("pre code");
+  codeBlocks.forEach((block) => {
+    // 检查是否已有复制按钮
+    if (block.parentElement.querySelector(".copy-button")) return;
+
+    // 创建复制按钮
+    const copyButton = document.createElement("img");
+    copyButton.src = "src/assets/copy.png";
+    copyButton.className = "copy-button";
+
+    // 设置按钮样式
+    copyButton.style.position = "absolute";
+    copyButton.style.top = "10px";
+    copyButton.style.right = "15px";
+    copyButton.style.zIndex = "10";
+    copyButton.style.width = "22px";
+    copyButton.style.cursor = "pointer";
+
+    // 添加点击事件
+    copyButton.addEventListener("click", () => {
+      const codeContent = block.textContent.trim(); // 只获取代码内容
+      navigator.clipboard
+        .writeText(codeContent)
+        .then(() => {
+          message.success("代码复制成功！");
+        })
+        .catch(() => {
+          message.error("复制失败，请重试！");
+        });
+    });
+
+    // 设置代码块父元素的相对定位以支持绝对定位按钮
+    const parent = block.parentElement;
+    if (parent) {
+      parent.style.position = "relative";
+      parent.appendChild(copyButton);
+    }
+  });
+};
 
 const suggestions = [
   "❓ 你是什么大语言模型？",
@@ -359,7 +478,6 @@ import {
   updateSessionUsingPut,
 } from "@/servers/api/aiChatSessionController.ts";
 import CreateSessionRequest = API.CreateSessionRequest;
-import SendMessageRequest = API.SendMessageRequest;
 import {
   getMessagesUsingPost,
   sendMessageUsingPost,
@@ -511,12 +629,45 @@ const createChat = reactive<CreateSessionRequest>({
   model: selectedModel.value,
 });
 
-const sendMessageRequest = reactive<SendMessageRequest>({
-  sessionId: sessionId.value,
-  role: "user",
-  platformId: selectedPlatform.value,
-  content: newMessage.value,
+const settingsDrawerVisible = ref(false);
+
+function openSetting() {
+  settingsDrawerVisible.value = true;
+}
+
+const chatSettings = reactive({
+  temperature: 0.95,
+  top_p: 0.7,
+  maxTokens: 1024,
+  n: 1,
+  presence_penalty: 0.0,
+  frequency_penalty: 0.0,
+});
+
+const applySettings = () => {
+  // 应用设置时，更新发送消息时的请求体
+  sendMessageRequest.temperature = chatSettings.temperature;
+  sendMessageRequest.top_p = chatSettings.top_p;
+  sendMessageRequest.maxTokens = chatSettings.maxTokens;
+  sendMessageRequest.n = chatSettings.n;
+  sendMessageRequest.presence_penalty = chatSettings.presence_penalty;
+  sendMessageRequest.frequency_penalty = chatSettings.frequency_penalty;
+  message.success("参数设置已更新！");
+  settingsDrawerVisible.value = false; // 关闭抽屉
+};
+
+const sendMessageRequest = reactive(<AIChatRequest>{
   model: selectedModel.value,
+  messages: [
+    {
+      role: "system",
+      content: "你是一个智能聊天机器人，可以回答各种问题。",
+    },
+  ],
+  temperature: 0.7,
+  maxTokens: 1000,
+  n: 1,
+  stream: false,
 });
 
 // 新建会话
@@ -528,6 +679,7 @@ const newConversation = async () => {
 
     if (res.code === 200) {
       sessionId.value = res.data;
+      router.push({ path: `?sessionId=${res.data}` });
       messages.value = []; // 清空当前消息，开始新会话
       currentContactName.value = "新会话";
       currentContactLastActive.value = "1 分钟前";
@@ -557,7 +709,6 @@ const updateConversationModel = async (
   platform: any
 ) => {
   sendMessageRequest.model = model;
-  sendMessageRequest.platformId = platform;
 };
 
 const isLoading = ref(false);
@@ -572,6 +723,12 @@ const sendMessage = async () => {
     }
 
     if (sessionId.value) {
+      sendMessageRequest.temperature = chatSettings.temperature;
+      sendMessageRequest.top_p = chatSettings.top_p;
+      sendMessageRequest.maxTokens = chatSettings.maxTokens;
+      sendMessageRequest.n = chatSettings.n;
+      sendMessageRequest.presence_penalty = chatSettings.presence_penalty;
+      sendMessageRequest.frequency_penalty = chatSettings.frequency_penalty;
       // 动态获取对应模型的图像
       const platformRes = await getPlatformByIdUsingGet({
         id: selectedPlatform.value,
@@ -588,36 +745,44 @@ const sendMessage = async () => {
         time: new Date().toLocaleTimeString(),
         avatar: User.value?.avatar,
       });
+      highlightCodeBlocks();
 
-      sendMessageRequest.content = newMessage.value;
+      sendMessageRequest.messages.push({
+        role: "user",
+        content: newMessage.value,
+      });
       newMessage.value = "";
 
       // 滚动到底部
       await nextTick();
       scrollToBottom();
+      sendMessageRequest.model = selectedModel.value;
 
       // 等待后端的 AI 回复
       try {
-        sendMessageRequest.sessionId = sessionId.value;
-        sendMessageRequest.platformId = selectedPlatform.value;
-        sendMessageRequest.model = selectedModel.value;
-
-        const response = await sendMessageUsingPost(sendMessageRequest);
+        const response = await sendMessageUsingPost(
+          { sessionId: sessionId.value },
+          sendMessageRequest
+        );
         await updateSessionUsingPut({
           id: sessionId.value,
           model: selectedModel.value,
         });
 
         if (response.code == 200) {
+          // 解析 AI 回复内容
+          const replyMessage =
+            response.data.choices[0]?.message?.content || "无回复";
           // 添加 AI 回复到上下文，使用动态图像
           messages.value.push({
             id: Date.now(),
             sender: "other",
             text: response.data,
-            htmlContent: marked(response.data), // 使用 marked 解析为 HTML
+            htmlContent: marked(replyMessage), // 使用 marked 解析为 HTML
             isMarkdown: true, // 标识为 Markdown
             time: new Date().toLocaleTimeString(),
             avatar: currentAIAvatar,
+            tokens: response.data.usage?.total_tokens,
           });
           // **手动触发代码块高亮**
           await nextTick();
@@ -652,6 +817,7 @@ const scrollToBottom = async () => {
 };
 
 import { useRouter, useRoute } from "vue-router";
+import AIChatRequest = API.AIChatRequest;
 
 const router = useRouter();
 const route = useRoute();
@@ -684,10 +850,11 @@ const loadChatSession = async (sessionIdParam) => {
           sender: message.role === "user" ? "me" : "other",
           text: message.content,
           htmlContent: marked(message.content),
-          isMarkdown: message.role !== "user",
+          isMarkdown: message.role === "user" ? false : true,
           time: new Date(message.created_time).toLocaleString(),
           avatar:
             message.role === "user" ? User.value?.avatar : currentAIAvatar,
+          tokens: message.tokens,
         }));
 
         // 滚动到底部
@@ -778,30 +945,24 @@ const currentModel = computed(() => {
 
 <style scoped>
 .page-container {
-  min-height: 80vh;
-  max-height: 90vh;
+  //min-height: 84vh;
+  //max-height: 90vh;
   border-radius: 15px;
 }
 
-.code-block {
-  background-color: #f5f5f5;
-  border: 1px solid #eaeaea;
-  padding: 10px;
-  border-radius: 5px;
-  white-space: pre-wrap;
-  overflow-x: auto;
+.a-drawer .ant-drawer-body {
+  padding: 24px;
 }
 
 .content {
   flex-grow: 1;
-  padding: 10px;
   border-radius: 15px;
-  margin: 0px auto;
   border: 1px solid honeydew;
 }
 
 .chat-interface {
-  height: 84vh;
+  max-height: 84vh;
+  min-height: 84vh;
   font-family: Arial, sans-serif;
 }
 
@@ -809,7 +970,7 @@ const currentModel = computed(() => {
   width: 35vh;
   background-color: rgba(224, 224, 224, 0.22);
   color: #333;
-  padding: 20px;
+  padding: 10px;
   border-right: 1px solid #eaeaea;
 }
 
@@ -819,7 +980,7 @@ const currentModel = computed(() => {
 
 .profile {
   text-align: center;
-  margin-bottom: 20px;
+  margin: 20px 0;
 }
 
 .profile-image {
@@ -887,15 +1048,15 @@ const currentModel = computed(() => {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  height: 81vh;
+  max-height: 90vh;
   width: 100%;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); /* 添加轻微阴影，提升层次感 */
 }
 
 .chat-header {
+  padding: 10px;
   display: flex;
   align-items: center;
-  padding-bottom: 10px;
   border-bottom: 1px solid #eaeaea;
 }
 
@@ -908,7 +1069,7 @@ const currentModel = computed(() => {
   border: 1px rgba(0, 119, 255, 0.27) solid;
   flex: 1;
   overflow-y: auto; /* 添加垂直滚动条 */
-  margin: 20px 0;
+  margin-bottom: 30px;
   padding: 20px; /* 给内容添加适当的内边距 */
   white-space: pre-wrap; /* 使消息文本支持自动换行 */
   background-color: rgba(225, 236, 240, 0.14); /* 消息区保持简洁的白色背景 */
@@ -937,7 +1098,6 @@ const currentModel = computed(() => {
 .message-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 10px;
 }
 
 .message-avatar {
@@ -958,7 +1118,6 @@ const currentModel = computed(() => {
 .other-message,
 .my-message {
   max-width: 60%;
-  padding: 20px 20px 15px 20px;
   border-radius: 8px;
   color: #333;
   position: relative;
@@ -969,26 +1128,31 @@ const currentModel = computed(() => {
 .other-message {
   border: 1px solid rgb(225, 225, 225); /* 较浅的边框 */
   background-color: rgba(219, 219, 219, 0.26); /* 柔和的灰色背景，避免突兀 */
-  line-height: 1.5;
+  line-height: 1.2;
   max-width: 60vh;
+  padding: 20px 20px 0px 20px;
+  margin-bottom: 50px;
 }
 
 .my-message {
+  padding: 30px 30px 30px 30px;
+  line-height: 1.5;
   background: #e9f5e2;
   border-radius: 8px;
   margin-left: auto;
   max-width: 60vh;
+  margin-bottom: 30px;
 }
 
 .message-time {
   display: block;
   font-size: 12px;
   color: #999; /* 调整为较暗的灰色，降低视觉优先级 */
-  margin-top: 15px;
   text-align: right;
 }
 
 .chat-input {
+  margin-bottom: -15px;
   align-items: center;
   padding: 10px 0;
   border: 1px solid #afafaf;
@@ -1011,13 +1175,14 @@ const currentModel = computed(() => {
   box-sizing: border-box;
 }
 
-pre,
-code {
-  line-height: 1.5; /* 适当的行高，提升阅读体验 */
+/* 重置默认 HTML 标签的样式 */
+.code-block * {
+  margin: 0px;
+  line-height: 1.5;
+  border-radius: 8px;
 }
 
 .profile-avatar {
-  //margin-right: 10px;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -1093,5 +1258,47 @@ code {
   .contact-list {
     display: none;
   }
+}
+
+.contacts-container {
+  overflow-y: auto;
+  max-height: calc(85vh - 280px); /* 动态计算最大高度，减去其他元素的高度 */
+  margin-top: 10px;
+  padding-right: 5px;
+}
+
+/* 自定义滚动条样式 */
+.contacts-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.contacts-container::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.contacts-container::-webkit-scrollbar-thumb {
+  background: #d2e3f2;
+  border-radius: 3px;
+}
+
+.contacts-container::-webkit-scrollbar-thumb:hover {
+  background: #b4daf7;
+}
+
+/* 修改联系人项样式以适应滚动 */
+.contact-item {
+  padding: 10px;
+  border-bottom: 1px solid #eaeaea;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 5px;
+}
+
+/* 修复 profile-avatar 样式的语法错误 */
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
 }
 </style>

@@ -1,26 +1,33 @@
 <script setup lang="ts">
 import { message } from "ant-design-vue";
-import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
-import { onMounted, reactive, ref } from "vue";
+import {
+  UserOutlined,
+  LockOutlined,
+  MailOutlined,
+} from "@ant-design/icons-vue";
+import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import RegisterModel from "@/views/common/login/model/RegisterModel.vue";
 // eslint-disable-next-line no-undef
 import LoginRequest = API.LoginRequest;
 import {
+  checkEmailUsingGet,
   getUserInfoUsingGet,
-  initGeetestUsingGet,
+  loginByEmailUsingPost,
   loginUsingPost,
 } from "@/servers/api/userController.ts";
 
 const formState = reactive<LoginRequest>({});
 const remember = ref(false);
-let captchaObj: any;
+
 import "@/utils/gt.js";
 import { getWebsiteDetailsUsingGet } from "@/servers/api/webSiteController.ts";
 import WebsiteVO = API.WebsiteVO;
+import {
+  initGeetestUsingGet,
+  sendResetCodeForLoginUsingPost,
+} from "@/servers/api/authController.ts";
 
-// 添加状态变量
-const captchaReady = ref(false); // 验证码是否加载完成
-const captchaValidated = ref(false); // 验证码是否验证通过
+let captchaObj: any;
 
 // 登录函数
 async function login() {
@@ -100,6 +107,10 @@ onMounted(async () => {
   }
 });
 
+// 添加状态变量
+const captchaReady = ref(false); // 验证码是否加载完成
+const captchaValidated = ref(false); // 验证码是否验证通过
+
 const initGeetestCaptcha = async () => {
   try {
     const res = await initGeetestUsingGet();
@@ -145,6 +156,14 @@ const initGeetestCaptcha = async () => {
   }
 };
 
+function onTabChange(key: string) {
+  if (key === "2") {
+    nextTick(() => {
+      initEmailGeetestCaptcha();
+    });
+  }
+}
+
 // 页面加载时自动填充账号和密码
 onMounted(() => {
   // 检查“记住我”状态
@@ -162,10 +181,142 @@ onMounted(() => {
     remember.value = false; // 不勾选“记住我”
   }
 });
+
+// 邮箱登录表单状态
+const emailFormState = reactive({
+  email: "",
+  code: "",
+  geetestChallenge: "",
+  geetestValidate: "",
+  geetestSeccode: "",
+});
+
+// 状态变量
+const loadingSendCode = ref(false);
+const countdown = ref(0);
+let timer: number | null = null;
+const emailCaptchaReady = ref(false);
+const emailCaptchaValidated = ref(false);
+let emailCaptchaObj: any;
+
+// 校验邮箱是否存在
+const checkEmailExist = async () => {
+  if (!emailFormState.email) return;
+  try {
+    const res = await checkEmailUsingGet({ email: emailFormState.email });
+    if (res.code === 200 && !res.data) {
+      message.warning("邮箱未注册，请先注册！");
+    }
+  } catch (error) {
+    message.error("邮箱校验失败，请稍后重试！");
+  }
+};
+
+// 初始化极验验证码
+const initEmailGeetestCaptcha = async () => {
+  try {
+    const res = await initGeetestUsingGet();
+    if (res.code === 200) {
+      const { gt, challenge, success, new_captcha } = JSON.parse(res.data);
+      window.initGeetest(
+        {
+          gt,
+          challenge,
+          new_captcha,
+          offline: !success,
+          product: "float",
+          width: "100%",
+        },
+        (obj: any) => {
+          emailCaptchaObj = obj;
+          obj.appendTo("#emailCaptchaBox");
+
+          obj.onReady(() => {
+            emailCaptchaReady.value = true;
+          });
+
+          obj.onSuccess(() => {
+            emailCaptchaValidated.value = true;
+            const result = emailCaptchaObj.getValidate();
+            emailFormState.geetestChallenge = result.geetest_challenge;
+            emailFormState.geetestValidate = result.geetest_validate;
+            emailFormState.geetestSeccode = result.geetest_seccode;
+          });
+        }
+      );
+    } else {
+      message.error("极验初始化失败！");
+    }
+  } catch (error) {
+    message.error("极验加载失败，请检查网络！");
+  }
+};
+
+// 发送验证码
+const sendCode = async () => {
+  if (!emailCaptchaValidated.value) {
+    message.error("请先完成极验验证！");
+    return;
+  }
+
+  try {
+    loadingSendCode.value = true;
+    await sendResetCodeForLoginUsingPost({
+      email: emailFormState.email,
+      geetestChallenge: emailFormState.geetestChallenge,
+      geetestValidate: emailFormState.geetestValidate,
+      geetestSeccode: emailFormState.geetestSeccode,
+    });
+    message.success("验证码已发送，请检查您的邮箱！");
+    countdown.value = 60;
+
+    timer = setInterval(() => {
+      if (countdown.value > 0) {
+        countdown.value -= 1;
+      } else {
+        clearInterval(timer!);
+        timer = null;
+      }
+    }, 1000);
+  } catch (error) {
+    message.error("验证码发送失败，请稍后再试！");
+  } finally {
+    loadingSendCode.value = false;
+  }
+};
+
+// 邮箱登录逻辑
+const loginWithEmail = async () => {
+  if (!emailFormState.email || !emailFormState.code) {
+    message.error("请输入完整信息！");
+    return;
+  }
+
+  try {
+    const res = await loginByEmailUsingPost({
+      email: emailFormState.email,
+      code: emailFormState.code,
+    });
+    if (res.code === 200) {
+      message.success("登录成功！");
+      localStorage.setItem("token", res.data?.token<String>);
+      window.location.href = "/";
+    } else {
+      message.error(res.message);
+    }
+  } catch (error) {
+    message.error("登录失败，请稍后重试！");
+  }
+};
+
+// 清理定时器
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <template>
-  <div class="home" style="">
+  <div class="home" style="height: 60vh">
     <div class="soft-tech-gradient-background"></div>
     <a-card
       style="
@@ -215,7 +366,7 @@ onMounted(() => {
       >
         <img
           :src="Website.cover_url"
-          style="width: 70%; margin: 20px auto; display: block"
+          style="height: 500px; margin: 0px auto; display: block"
         />
       </a-card-grid>
       <a-card-grid
@@ -234,12 +385,12 @@ onMounted(() => {
           欢迎使用本系统
         </div>
         <!-- 使用Flexbox进行布局 -->
-        <div style="margin: 0 auto; text-align: center; width: 70%">
-          <a-tabs default-active-key="1">
-            <a-tab-pane
-              key="1"
-              tab="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;账号密码登录&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-            >
+        <div style="margin: 0 auto; text-align: center; width: 80%">
+          <a-tabs default-active-key="1" @change="onTabChange">
+            <a-tab-pane key="1">
+              <template #tab>
+                <div style="padding: 0 20px">账号密码登录</div>
+              </template>
               <a-form
                 :model="formState"
                 name="normal_login"
@@ -248,9 +399,13 @@ onMounted(() => {
               >
                 <a-form-item
                   name="username"
-                  :rules="[{ required: true, message: '请输入账号！' }]"
+                  :rules="[{ required: true, message: '请输入账号或手机号！' }]"
                 >
-                  <a-input v-model:value="formState.username" size="large">
+                  <a-input
+                    v-model:value="formState.username"
+                    size="large"
+                    placeholder="账号或手机号"
+                  >
                     <template #prefix>
                       <UserOutlined class="site-form-item-icon" />
                     </template>
@@ -264,6 +419,7 @@ onMounted(() => {
                   <a-input-password
                     v-model:value="formState.password"
                     size="large"
+                    placeholder="密码"
                   >
                     <template #prefix>
                       <LockOutlined class="site-form-item-icon" />
@@ -273,7 +429,7 @@ onMounted(() => {
                 <a-form-item>
                   <a-form-item name="remember" no-style>
                     <!-- 极验验证码组件 -->
-                    <div id="captchaBox" style="margin-bottom: 40px"></div>
+                    <div id="captchaBox" style="margin-bottom: 20px"></div>
                     <a-checkbox v-model:checked="remember">记住我</a-checkbox>
                   </a-form-item>
                   <a class="login-form-forgot" href="">忘记密码</a>
@@ -296,8 +452,78 @@ onMounted(() => {
               </a-form>
               <RegisterModel ref="registerModelRef" />
             </a-tab-pane>
-            <a-tab-pane key="2" tab="&nbsp;&nbsp;手机号登录&nbsp;&nbsp;">
-              <!-- Phone login form goes here -->
+            <a-tab-pane key="2">
+              <template #tab>
+                <div style="padding: 0 20px">邮箱验证登录</div>
+              </template>
+              <a-form
+                :model="emailFormState"
+                name="email_login"
+                class="login-form"
+                style="margin-top: 10px"
+              >
+                <!-- 邮箱输入框 -->
+                <a-form-item
+                  name="email"
+                  :rules="[{ required: true, message: '请输入邮箱！' }]"
+                >
+                  <a-input
+                    v-model:value="emailFormState.email"
+                    placeholder="请输入邮箱"
+                    @blur="checkEmailExist"
+                    size="large"
+                  >
+                    <template #prefix>
+                      <MailOutlined class="site-form-item-icon" />
+                    </template>
+                  </a-input>
+                </a-form-item>
+
+                <!-- 验证码输入框 -->
+                <a-form-item
+                  name="code"
+                  :rules="[{ required: true, message: '请输入验证码！' }]"
+                >
+                  <a-row gutter="8">
+                    <a-col span="16">
+                      <a-input
+                        v-model:value="emailFormState.code"
+                        size="large"
+                        placeholder="请输入验证码"
+                      />
+                    </a-col>
+                    <a-col span="8">
+                      <a-button
+                        h-9
+                        :loading="loadingSendCode"
+                        :disabled="countdown > 0"
+                        @click="sendCode"
+                      >
+                        {{
+                          countdown > 0 ? countdown + "s 后重发" : "发送验证码"
+                        }}
+                      </a-button>
+                    </a-col>
+                  </a-row>
+                </a-form-item>
+                <div id="emailCaptchaBox" mt1 mb4></div>
+
+                <a-form-item>
+                  <a-button
+                    type="primary"
+                    html-type="submit"
+                    class="login-form-button"
+                    @click="loginWithEmail"
+                    :disabled="!emailCaptchaValidated"
+                    style="width: 90%"
+                  >
+                    邮箱登录
+                  </a-button>
+                  <br />
+                  Or
+                  <a @click="handleOpen">现在注册! </a>
+                </a-form-item>
+              </a-form>
             </a-tab-pane>
           </a-tabs>
         </div>

@@ -8,14 +8,45 @@ declare namespace API {
     id?: number;
     /** 逻辑删除标记 */
     isDelete?: number;
-    /** 附加元信息（JSON格式） */
-    metadata?: string;
+    /** 模型名称 */
+    model?: string;
     /** 角色（user/assistant/system） */
     role?: string;
     /** 会话ID */
     session_id?: number;
     /** 消息tokens（用于统计和上下文控制） */
     tokens?: number;
+  };
+
+  type AIChatRequest = {
+    do_sample?: boolean;
+    frequency_penalty?: number;
+    maxTokens?: number;
+    messages?: MessageReq[];
+    model?: string;
+    n?: number;
+    presence_penalty?: number;
+    request_id?: number;
+    stream?: boolean;
+    temperature?: number;
+    top_p?: number;
+  };
+
+  type AIChatResponse = {
+    /** 聊天完成的选项列表 */
+    choices?: Choice[];
+    /** 创建时间的时间戳 */
+    created?: number;
+    /** 聊天完成的唯一标识符 */
+    id?: string;
+    /** 使用的模型ID */
+    model?: string;
+    /** 对象类型，通常为 'chat.completion' */
+    object?: string;
+    /** 系统指纹 */
+    system_fingerprint?: string;
+    /** 令牌使用情况 */
+    usage?: Usage;
   };
 
   type AIChatSessionVO = {
@@ -84,6 +115,12 @@ declare namespace API {
     platform_url?: string;
     /** 更新时间 */
     updated_time?: string;
+  };
+
+  type BaseResponseAIChatResponse = {
+    code?: number;
+    data?: AIChatResponse;
+    message?: string;
   };
 
   type BaseResponseAIPlatform = {
@@ -259,6 +296,27 @@ declare namespace API {
     id: number;
   };
 
+  type checkEmailUsingGETParams = {
+    /** email */
+    email: string;
+  };
+
+  type checkPhoneUsingGETParams = {
+    /** phone */
+    phone: string;
+  };
+
+  type Choice = {
+    /** 完成的原因 */
+    finish_reason?: string;
+    /** 选项的索引 */
+    index?: number;
+    /** 日志概率信息 */
+    logprobs?: string;
+    /** 消息对象 */
+    message?: MessageRes;
+  };
+
   type clearMessagesUsingDELETEParams = {
     /** sessionId */
     sessionId: number;
@@ -292,6 +350,7 @@ declare namespace API {
   };
 
   type CreateModelRequest = {
+    api_key?: string;
     context_window?: string;
     max_output_tokens?: string;
     model_desc?: string;
@@ -454,6 +513,7 @@ declare namespace API {
   };
 
   type HomeVO = {
+    aitop10?: AIPlatform[];
     commentCount?: number;
     commentList?: CommentVO[];
     notice?: Notice;
@@ -490,12 +550,32 @@ declare namespace API {
     tag?: string;
   };
 
+  type loginByEmailUsingPOSTParams = {
+    /** email */
+    email: string;
+    /** code */
+    code: string;
+  };
+
   type LoginRequest = {
     geetestChallenge?: string;
     geetestSeccode?: string;
     geetestValidate?: string;
     password?: string;
     username?: string;
+  };
+
+  type MessageReq = {
+    content?: string;
+    name?: string;
+    role?: string;
+  };
+
+  type MessageRes = {
+    /** 消息的内容 */
+    content?: string;
+    /** 消息作者的角色 */
+    role?: string;
   };
 
   type ModelAndView = {
@@ -594,9 +674,18 @@ declare namespace API {
     update_user?: string;
   };
 
+  type openVipUsingPOSTParams = {
+    /** userId */
+    userId: number;
+    /** months */
+    months: number;
+  };
+
   type OrderCreateRequest = {
+    count?: number;
     payMethod?: string;
     productId?: number;
+    type?: string;
   };
 
   type OrderUpdateRequest = {
@@ -742,6 +831,12 @@ declare namespace API {
     username?: string;
   };
 
+  type ResetPasswordRequest = {
+    code?: string;
+    email?: string;
+    newPassword?: string;
+  };
+
   type ScoreCreateRequest = {
     /** 关联评分id */
     linkId?: number;
@@ -800,17 +895,36 @@ declare namespace API {
     searchText?: string;
   };
 
-  type searchUsingPOSTParams = {
+  type searchUsingPOST1Params = {
     /** searchText */
     searchText?: string;
   };
 
-  type SendMessageRequest = {
-    content?: string;
-    model?: string;
-    platformId?: number;
-    role?: string;
-    sessionId?: number;
+  type searchUsingPOSTParams = {
+    /** query */
+    query: string;
+    /** stream */
+    stream?: boolean;
+  };
+
+  type sendMessageUsingPOSTParams = {
+    /** sessionId */
+    sessionId: number;
+  };
+
+  type sendResetCodeForLoginUsingPOSTParams = {
+    /** email */
+    email: string;
+  };
+
+  type sendResetCodeForRegisterUsingPOSTParams = {
+    /** email */
+    email: string;
+  };
+
+  type sendResetCodeUsingPOSTParams = {
+    /** email */
+    email: string;
   };
 
   type TaskAddRequest = {
@@ -885,6 +999,15 @@ declare namespace API {
     postId: number;
   };
 
+  type TokenDetails = {
+    /** 接受的预测令牌数量 */
+    accepted_prediction_tokens?: number;
+    /** 推理令牌数量 */
+    reasoning_tokens?: number;
+    /** 拒绝的预测令牌数量 */
+    rejected_prediction_tokens?: number;
+  };
+
   type UpdateByAdminRequest = {
     /** 家庭住址 */
     address?: string;
@@ -956,6 +1079,17 @@ declare namespace API {
 
   type uploadFileUsingPOSTParams = {
     biz?: string;
+  };
+
+  type Usage = {
+    /** 完成令牌的数量 */
+    completion_tokens?: number;
+    /** 完成令牌的详细信息 */
+    completion_tokens_details?: TokenDetails;
+    /** 提示令牌的数量 */
+    prompt_tokens?: number;
+    /** 总令牌数 */
+    total_tokens?: number;
   };
 
   type User = {

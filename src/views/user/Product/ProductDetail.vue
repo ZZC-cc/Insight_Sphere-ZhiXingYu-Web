@@ -55,12 +55,11 @@
               <a-button
                 font-550
                 type="primary"
-                v-if="product.type == '会员免费'"
                 ml4
-                @click=""
                 style="background-color: rgba(255, 165, 0, 0.3); color: #ff6600"
+                @click="handleOpenMembership"
               >
-                开通会员免费看
+                开通会员
               </a-button>
             </div>
           </a-col>
@@ -85,31 +84,21 @@
               "
             ></div>
             <div v-else>
-              <a-result title="抱歉，您没有权限访问该资源。请先购买或成为会员">
-                <template #extra>
-                  <div style="padding: 5px 20px" v-if="product.type != '免费'">
-                    <a-button
-                      type="primary"
-                      font-550
-                      @click="handleMembershipPurchase(product.id)"
-                      >￥{{ product.price }} 立即购买
-                    </a-button>
-                    <a-button
-                      font-550
-                      type="primary"
-                      v-if="product.type == '会员免费'"
-                      ml4
-                      @click=""
-                      style="
-                        background-color: rgba(255, 165, 0, 0.3);
-                        color: #ff6600;
-                      "
-                    >
+              <!-- 动态显示内容 -->
+              <div v-if="User.role === 'vip'">
+                <p>欢迎回来，尊贵的会员！</p>
+              </div>
+              <div v-else>
+                <a-result
+                  title="抱歉，您没有权限访问该资源。请先购买或成为会员"
+                >
+                  <template #extra>
+                    <a-button type="primary" @click="handleOpenMembership">
                       开通会员
                     </a-button>
-                  </div>
-                </template>
-              </a-result>
+                  </template>
+                </a-result>
+              </div>
             </div>
           </a-tab-pane>
         </a-tabs>
@@ -178,6 +167,7 @@ const createOrderRequest = ref<API.OrderCreateRequest>({
 async function handleMembershipPurchase(productId) {
   try {
     createOrderRequest.value.productId = productId;
+    createOrderRequest.value.type = "普通订单";
     console.log(productId);
     // Step 1: 创建订单
     const orderResponse = await createOrderUsingPost(createOrderRequest.value);
@@ -189,6 +179,30 @@ async function handleMembershipPurchase(productId) {
   } catch (error) {
     console.error(error);
     message.error(error.message || "操作失败");
+  }
+}
+
+// 处理开通会员
+async function handleOpenMembership() {
+  try {
+    // Step 1: 创建会员订单
+    const createOrderRequest = {
+      productId: null, // 假设会员产品ID固定为0，后端逻辑自行调整
+      payMethod: "支付宝",
+      type: "会员订单",
+      count: 10,
+    };
+    const orderResponse = await createOrderUsingPost(createOrderRequest);
+    if (orderResponse.code !== 200) {
+      throw new Error("创建订单失败: " + orderResponse.message);
+    }
+
+    // Step 2: 支付跳转
+    const orderId = orderResponse.data;
+    window.location.href = `http://localhost:9666/api/alipay/pay/${orderId}`;
+  } catch (error) {
+    console.error(error);
+    message.error(error.message || "操作失败，请重试！");
   }
 }
 

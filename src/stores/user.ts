@@ -1,7 +1,7 @@
 import UserVO = API.UserVO;
 import WebsiteVO = API.WebsiteVO;
 import { defineStore } from "pinia";
-import { computed, onMounted, shallowRef } from "vue";
+import { computed, onMounted, ref, shallowRef } from "vue";
 import { getWebsiteDetailsUsingGet } from "../servers/api/webSiteController.ts";
 import { getUserInfoUsingGet } from "../servers/api/userController.ts";
 import router from "../router";
@@ -9,9 +9,10 @@ import { message } from "ant-design-vue";
 
 export const useUserStore = defineStore("user", () => {
   // 用户信息
-  const userVO = shallowRef<UserVO>();
+  const userVO = ref<UserVO>(); // 确保数据响应式
+
   // 网站信息
-  const websiteVO = shallowRef<WebsiteVO>();
+  const websiteVO = ref<WebsiteVO>();
 
   /**
    * 获取用户信息
@@ -44,6 +45,13 @@ export const useUserStore = defineStore("user", () => {
       console.error("登出失败", error);
     }
   };
+
+  onMounted(async () => {
+    // 在页面加载时获取用户信息
+    const res = await getUserInfoUsingGet();
+    userVO.value = res.data;
+    getWebsiteInfo();
+  });
 
   /**
    * 是否已登录

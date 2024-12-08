@@ -8,7 +8,7 @@ import PostVO = API.PostVO;
 import { onMounted, reactive, ref, shallowRef } from "vue";
 import {
   deletePostUsingPost,
-  listPostByPageUsingPost,
+  getAllPostsUsingPost,
   searchPostBySearchTextUsingGet,
 } from "@/servers/api/postController.ts";
 import Post from "@/views/user/Post/Post.vue";
@@ -58,7 +58,7 @@ onMounted(async () => {
 
 async function getData() {
   try {
-    const response = await listPostByPageUsingPost({
+    const response = await getAllPostsUsingPost({
       searchText: "",
     });
     // 处理响应数据，将数据赋值给 state.dataSource

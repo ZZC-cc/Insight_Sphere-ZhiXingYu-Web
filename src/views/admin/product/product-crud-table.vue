@@ -24,6 +24,7 @@ const columns = shallowRef([
   {
     title: "作者",
     dataIndex: "user",
+    width: 150,
   },
   {
     title: "标签",

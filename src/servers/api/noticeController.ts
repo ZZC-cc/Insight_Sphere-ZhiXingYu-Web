@@ -49,9 +49,9 @@ export async function getAllNoticeUsingGet(options?: { [key: string]: any }) {
 }
 
 /** 搜索通知接口 POST /api/notice/search */
-export async function searchUsingPost(
+export async function searchUsingPost1(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.searchUsingPOSTParams,
+  params: API.searchUsingPOST1Params,
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponseListNotice>("/api/notice/search", {

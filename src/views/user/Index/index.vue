@@ -134,9 +134,9 @@ onMounted(async () => {
 /* 可以给 logo 元素增加一些间距，以避免被模糊效果影响 */
 .logo {
   position: absolute;
-  width: 330px;
-  top: 40px;
-  right: 30%;
+  width: 450px;
+  top: 20px;
+  right: 20%;
 }
 
 .title {

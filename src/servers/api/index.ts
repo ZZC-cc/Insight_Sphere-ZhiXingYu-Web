@@ -7,6 +7,7 @@ import * as aiChatSessionController from "./aiChatSessionController";
 import * as aiModelController from "./aiModelController";
 import * as aiPlatformController from "./aiPlatformController";
 import * as alipayController from "./alipayController";
+import * as authController from "./authController";
 import * as basicErrorController from "./basicErrorController";
 import * as commentController from "./commentController";
 import * as fileController from "./fileController";
@@ -25,6 +26,7 @@ export default {
   aiModelController,
   aiPlatformController,
   alipayController,
+  authController,
   basicErrorController,
   commentController,
   fileController,

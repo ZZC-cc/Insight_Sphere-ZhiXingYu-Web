@@ -14,6 +14,16 @@ const userRoutes: Array<RouteRecordRaw> = [
         meta: { requiresAuth: false },
       },
       {
+        path: "/center",
+        component: () => import("@/views/common/account/center.vue"),
+        meta: { requiresAuth: false },
+      },
+      {
+        path: "/settings",
+        component: () => import("@/views/common/account/settings.vue"),
+        meta: { requiresAuth: false },
+      },
+      {
         path: "/AIChat",
         component: () => import("@/views/user/AIChat/AIChat.vue"),
         meta: { requiresAuth: false },
